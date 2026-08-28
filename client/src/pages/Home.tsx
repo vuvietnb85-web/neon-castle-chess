@@ -175,12 +175,15 @@ export default function Home() {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraMessage, setCameraMessage] = useState("Camera standby");
   const [muted, setMuted] = useState(true);
+  const [captureFx, setCaptureFx] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("capture-demo"));
   const [cameraPosition, setCameraPosition] = useState({ x: 68, y: 70 });
   const dragRef = useRef({ active: false, startX: 0, startY: 0, originX: 68, originY: 70 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const engineTimer = useRef<number | null>(null);
+  const captureTimer = useRef<number | null>(null);
   const demoMode = useMemo(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("demo"), []);
+  const captureDemoMode = useMemo(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("capture-demo"), []);
 
   const legalTargets = selected ? getLegalMoves(board, selected) : [];
   const legalTargetKeys = new Set(legalTargets.map(squareName));
@@ -194,10 +197,24 @@ export default function Home() {
     return () => window.clearTimeout(demoTimer);
   }, [demoMode]);
 
+  useEffect(() => {
+    if (!captureDemoMode) return;
+    setCaptureFx(true);
+    const timer = window.setTimeout(() => setCaptureFx(false), 2600);
+    return () => window.clearTimeout(timer);
+  }, [captureDemoMode]);
+
   useEffect(() => () => {
     if (engineTimer.current) window.clearTimeout(engineTimer.current);
+    if (captureTimer.current) window.clearTimeout(captureTimer.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
   }, []);
+
+  const triggerCaptureFx = () => {
+    if (captureTimer.current) window.clearTimeout(captureTimer.current);
+    setCaptureFx(true);
+    captureTimer.current = window.setTimeout(() => setCaptureFx(false), 2600);
+  };
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -257,6 +274,7 @@ export default function Home() {
       setBoard(nextBoard);
       setLastMove({ from: reply.from, to: reply.to });
       setMoveList((history) => [...history, { from: squareName(reply.from), to: squareName(reply.to), capture: captured, note: captured ? "tactical" : "engine" }]);
+      if (captured) triggerCaptureFx();
       setTurn("w");
       setEngineStatus(captured ? "Material shift — your move" : "Your move");
     }, 820);
@@ -275,6 +293,7 @@ export default function Home() {
       setBoard(currentBoard);
       setLastMove({ from: selected, to: square });
       setMoveList((history) => [...history, { from: squareName(selected), to: squareName(square), capture: captured }]);
+      if (captured) triggerCaptureFx();
       setSelected(null);
       setTurn("b");
       setEngineStatus("Deep Glass is calculating");
@@ -320,6 +339,10 @@ export default function Home() {
 
   return (
     <main className="app-shell">
+      <div className="taiwan-marquee taiwan-marquee-top" aria-hidden="true"><div className="marquee-track"><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
+      <div className="taiwan-marquee taiwan-marquee-middle" aria-hidden="true"><div className="marquee-track marquee-track-reverse"><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
+      <div className="taiwan-marquee taiwan-marquee-bottom" aria-hidden="true"><div className="marquee-track marquee-track-reverse"><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
+      {captureFx && <div className="capture-splash" role="status" aria-live="polite"><div className="capture-orbit capture-orbit-one" /><div className="capture-orbit capture-orbit-two" /><div className="quanta-stamp"><span className="quanta-symbol">Q</span><span className="quanta-word">QUANTA</span><small>TAIWAN / CAPTURED</small></div><div className="capture-caption">MATERIAL SHIFT <span>+</span>1</div></div>}
       <header className="topbar">
         <div className="brand-lockup">
           <div className="brand-mark"><span /></div>

@@ -13,3 +13,9 @@
 - Desktop-style companion tabs/panel are hidden in portrait so the chess board remains the focus.
 - The camera card becomes a circular floating bubble positioned via percentage coordinates. It is draggable with Pointer Events and constrained inside the viewport.
 - The bubble keeps a compact camera toggle, front/rear switch, and local-only camera behavior so the feature remains accessible after the desktop controls are collapsed.
+
+
+## Capture celebration
+- Official brand context was checked against the [Quanta Computer Taiwan website](https://www.quantatw.com/quanta/english/default.aspx). The UI uses a decorative QUANTA / TAIWAN wordmark rather than copying a protected logo asset.
+- A blue Taiwan-inspired capture celebration now triggers only when a move captures a piece. It includes a centered orbital splash, material-shift caption, and three low-opacity full-screen marquee layers using the requested Vietnamese phrase.
+- `?capture-demo` makes the celebration render on initial load for visual QA.
