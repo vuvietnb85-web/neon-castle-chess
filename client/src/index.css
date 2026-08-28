@@ -313,3 +313,17 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 @media (orientation: portrait) {
   .taiwan-marquee-middle { top: 49%; opacity: .08; }
 }
+
+/* Gold upgrade: doubled marquee type with precious-metal glow */
+.taiwan-marquee { opacity: .42; }
+.taiwan-marquee-bottom { opacity: .34; }
+.taiwan-marquee-middle { opacity: .2; }
+.marquee-track span { font-size: 20px; font-weight: 700; letter-spacing: .24em; background: linear-gradient(180deg, #fff4bb 0%, #ffd65c 38%, #d99619 72%, #fff0a1 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 6px rgba(255,214,92,.95), 0 0 18px rgba(234,180,40,.76), 0 0 34px rgba(21,148,207,.62); animation: gold-pulse 2.2s ease-in-out infinite; }
+@keyframes gold-pulse { 0%, 100% { filter: brightness(.96); } 50% { filter: brightness(1.28); } }
+@media (orientation: portrait) {
+  .taiwan-marquee { opacity: .38; }
+  .taiwan-marquee-bottom { opacity: .3; }
+  .taiwan-marquee-middle { opacity: .16; }
+  .marquee-track span { font-size: 16px; letter-spacing: .12em; }
+}
+@media (prefers-reduced-motion: reduce) { .marquee-track span { animation: none; } }

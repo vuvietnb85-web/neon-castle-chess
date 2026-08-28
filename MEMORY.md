@@ -19,3 +19,7 @@
 - Official brand context was checked against the [Quanta Computer Taiwan website](https://www.quantatw.com/quanta/english/default.aspx). The UI uses a decorative QUANTA / TAIWAN wordmark rather than copying a protected logo asset.
 - A blue Taiwan-inspired capture celebration now triggers only when a move captures a piece. It includes a centered orbital splash, material-shift caption, and three low-opacity full-screen marquee layers using the requested Vietnamese phrase.
 - `?capture-demo` makes the celebration render on initial load for visual QA.
+
+
+## Marquee gold upgrade
+- The requested marquee phrase now renders at double size in portrait and desktop contexts, with a precious-metal gradient, animated brightness pulse, gold bloom, and retained Taiwan-blue edge glow for contrast.
