@@ -133,18 +133,72 @@ function getLegalMoves(board: ThemeBoard, from: Square): Square[] {
   return moves;
 }
 
-function chooseEngineMove(board: ThemeBoard) {
-  const candidates: { from: Square; to: Square; score: number }[] = [];
+const pieceValue: Record<PieceType, number> = { k: 200, q: 90, r: 50, b: 33, n: 32, p: 10 };
+
+function applyEngineMove(board: ThemeBoard, from: Square, to: Square) {
+  const next = board.map((row) => [...row]);
+  next[to.r][to.c] = next[from.r][from.c];
+  next[from.r][from.c] = null;
+  return next;
+}
+
+function evaluatePosition(board: ThemeBoard) {
+  let score = 0;
   board.forEach((row, r) => row.forEach((piece, c) => {
-    if (!piece || piece.color !== "b") return;
-    getLegalMoves(board, { r, c }).forEach((to) => {
-      const target = board[to.r][to.c];
-      const score = target ? ({ q: 9, r: 5, b: 3, n: 3, p: 1, k: 20 }[target.type] ?? 0) : (to.r > 3 ? 0.4 : 0);
-      candidates.push({ from: { r, c }, to, score });
-    });
+    if (!piece) return;
+    const sign = piece.color === "b" ? 1 : -1;
+    const centerDistance = Math.abs(3.5 - r) + Math.abs(3.5 - c);
+    const centerBonus = piece.type === "p" || piece.type === "n" || piece.type === "b" ? Math.max(0, 4 - centerDistance) * 0.7 : 0;
+    const advancement = piece.type === "p" ? (piece.color === "b" ? r : 7 - r) * 0.35 : 0;
+    score += sign * (pieceValue[piece.type] + centerBonus + advancement);
   }));
-  candidates.sort((a, b) => b.score - a.score);
-  return candidates[0] ?? null;
+  return score;
+}
+
+function generateEngineMoves(board: ThemeBoard, color: Color) {
+  const moves: { from: Square; to: Square; captureValue: number }[] = [];
+  board.forEach((row, r) => row.forEach((piece, c) => {
+    if (!piece || piece.color !== color) return;
+    getLegalMoves(board, { r, c }).forEach((to) => moves.push({ from: { r, c }, to, captureValue: board[to.r][to.c] ? pieceValue[board[to.r][to.c]!.type] : 0 }));
+  }));
+  return moves.sort((a, b) => b.captureValue - a.captureValue);
+}
+
+function minimax(board: ThemeBoard, depth: number, alpha: number, beta: number, maximizingBlack: boolean): number {
+  if (depth === 0) return evaluatePosition(board);
+  const color: Color = maximizingBlack ? "b" : "w";
+  const moves = generateEngineMoves(board, color);
+  if (!moves.length) return evaluatePosition(board);
+  if (maximizingBlack) {
+    let best = -Infinity;
+    for (const move of moves) {
+      best = Math.max(best, minimax(applyEngineMove(board, move.from, move.to), depth - 1, alpha, beta, false));
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break;
+    }
+    return best;
+  }
+  let best = Infinity;
+  for (const move of moves) {
+    best = Math.min(best, minimax(applyEngineMove(board, move.from, move.to), depth - 1, alpha, beta, true));
+    beta = Math.min(beta, best);
+    if (beta <= alpha) break;
+  }
+  return best;
+}
+
+function chooseEngineMove(board: ThemeBoard) {
+  const candidates = generateEngineMoves(board, "b");
+  let bestMove: (typeof candidates)[number] | null = null;
+  let bestScore = -Infinity;
+  for (const move of candidates) {
+    const score = minimax(applyEngineMove(board, move.from, move.to), 2, -Infinity, Infinity, false) + move.captureValue * 0.12;
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = move;
+    }
+  }
+  return bestMove;
 }
 
 function PlayerChip({ avatar, name, rating, color, active, time, tag }: { avatar?: string; name: string; rating: string; color: Color; active?: boolean; time: string; tag?: string }) {

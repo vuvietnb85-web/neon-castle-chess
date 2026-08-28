@@ -29,3 +29,9 @@
 - Added an opt-in Web Audio API soundscape with no external audio assets. The sound toggle is visible in the top bar and changes to a glowing gold state when enabled.
 - Captures play a layered low impact plus ascending triangle chime. Each marquee animation iteration plays a short high-frequency Taiwan-blue tick, and enabling sound provides an immediate confirmation cue.
 - Audio remains off by default to respect browser autoplay policies and user preference; the first cue is unlocked through the sound button gesture.
+
+
+## Difficulty and motion upgrade
+- Replaced the greedy engine move picker with a depth-2 minimax reply search using alpha-beta pruning, capture ordering, material scoring, center control, and pawn advancement heuristics. This remains lightweight enough for the browser while producing more tactical replies.
+- Marquee text now breathes through slow, phase-shifted scale cycles, subtle opacity shimmer, and gentle letter-spacing drift, creating a random-feeling rhythm without layout jumps. Reduced-motion users receive static text.
+Correction: the final marquee drift animation uses opacity shimmer rather than animated letter-spacing, preserving a stable layout while still feeling alive.
