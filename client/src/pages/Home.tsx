@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import {
   Camera,
   CameraOff,
@@ -175,6 +175,8 @@ export default function Home() {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraMessage, setCameraMessage] = useState("Camera standby");
   const [muted, setMuted] = useState(true);
+  const [cameraPosition, setCameraPosition] = useState({ x: 68, y: 70 });
+  const dragRef = useRef({ active: false, startX: 0, startY: 0, originX: 68, originY: 70 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const engineTimer = useRef<number | null>(null);
@@ -293,6 +295,27 @@ export default function Home() {
     setEngineStatus("Your move");
   };
 
+  const handleCameraPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    const bounds = event.currentTarget.closest(".app-shell")?.getBoundingClientRect();
+    if (!bounds) return;
+    dragRef.current = { active: true, startX: event.clientX, startY: event.clientY, originX: cameraPosition.x, originY: cameraPosition.y };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleCameraPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.active) return;
+    const bounds = event.currentTarget.closest(".app-shell")?.getBoundingClientRect();
+    if (!bounds) return;
+    const nextX = dragRef.current.originX + ((event.clientX - dragRef.current.startX) / bounds.width) * 100;
+    const nextY = dragRef.current.originY + ((event.clientY - dragRef.current.startY) / bounds.height) * 100;
+    setCameraPosition({ x: Math.min(78, Math.max(2, nextX)), y: Math.min(82, Math.max(8, nextY)) });
+  };
+
+  const handleCameraPointerUp = () => {
+    dragRef.current.active = false;
+  };
+
   const statusText = turn === "w" ? "White to move" : "Engine turn";
 
   return (
@@ -367,7 +390,7 @@ export default function Home() {
             {(["game", "moves", "analysis"] as const).map((tab) => <button key={tab} className={`tab ${activeTab === tab ? "tab-active" : ""}`} onClick={() => setActiveTab(tab)} role="tab" aria-selected={activeTab === tab}>{tab === "game" ? "Game" : tab === "moves" ? "Move list" : "Analysis"}</button>)}
             <button className="tab-settings" aria-label="Panel settings"><MoreHorizontal size={16} /></button>
           </div>
-          <div className="camera-card">
+          <div className="camera-card" style={{ left: `${cameraPosition.x}%`, top: `${cameraPosition.y}%` }} onPointerDown={handleCameraPointerDown} onPointerMove={handleCameraPointerMove} onPointerUp={handleCameraPointerUp}>
             <div className="camera-header"><div className="camera-title"><span className={`camera-state ${cameraOn ? "camera-state-on" : ""}`} /> <span>Camera companion</span></div><button className="camera-expand" aria-label="Expand camera"><Maximize2 size={15} /></button></div>
             <div className="camera-view" style={{ backgroundImage: `url(/manus-storage/camera-ambient_5e1ac6fb.png)` }}>
               <img className={`camera-avatar ${cameraOn ? "camera-avatar-hidden" : ""}`} src="/manus-storage/player-avatar_2671cb50.png" alt="Camera placeholder" />
@@ -375,6 +398,7 @@ export default function Home() {
               <div className="camera-corner camera-corner-tl" /><div className="camera-corner camera-corner-tr" /><div className="camera-corner camera-corner-bl" /><div className="camera-corner camera-corner-br" />
               <div className="camera-copy"><span className="camera-kicker">{cameraOn ? "PRIVATE PREVIEW" : "YOUR MOVE, YOUR SPACE"}</span><strong>{cameraOn ? cameraMessage : "Connect your camera"}</strong><small>{cameraOn ? "Only visible to you in this session" : "Keep the game face-to-face"}</small></div>
               <div className="camera-mode-switch"><button className={cameraSide === "front" ? "mode-active" : ""} onClick={() => setCameraSide("front")}>Front</button><button className="flip-button" onClick={flipCamera} aria-label="Switch camera"><RefreshCw size={13} /></button><button className={cameraSide === "rear" ? "mode-active" : ""} onClick={() => setCameraSide("rear")}>Rear</button></div>
+              <button className={`camera-bubble-button ${cameraOn ? "camera-bubble-button-live" : ""}`} onClick={toggleCamera} aria-label={cameraOn ? "Stop camera" : "Start camera"}>{cameraOn ? <CameraOff size={14} /> : <Camera size={14} />}</button>
             </div>
             <div className="camera-controls"><button className="control-button" onClick={() => setMuted(!muted)} aria-label={muted ? "Unmute" : "Mute"}>{muted ? <VolumeX size={17} /> : <Volume2 size={17} />}</button><button className={`camera-main-button ${cameraOn ? "camera-main-button-live" : ""}`} onClick={toggleCamera} aria-label={cameraOn ? "Stop camera" : "Start camera"}>{cameraOn ? <CameraOff size={21} /> : <Camera size={21} />}</button><button className="control-button" onClick={flipCamera} aria-label="Flip camera"><RefreshCw size={17} /></button></div>
             <div className="camera-privacy"><ShieldCheck size={13} /> Local-only camera access <span>{cameraOn ? "LIVE" : "OFF"}</span></div>
