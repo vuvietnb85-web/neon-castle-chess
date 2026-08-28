@@ -327,3 +327,8 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   .marquee-track span { font-size: 16px; letter-spacing: .12em; }
 }
 @media (prefers-reduced-motion: reduce) { .marquee-track span { animation: none; } }
+
+.sound-toggle { position: relative; }
+.sound-toggle-on { color: #ffd65c; background: rgba(255,214,92,.08); box-shadow: 0 0 16px rgba(234,180,40,.18); }
+.sound-toggle-on::after { content: ""; position: absolute; right: 3px; top: 3px; width: 4px; height: 4px; border-radius: 50%; background: #ffd65c; box-shadow: 0 0 7px #ffd65c; }
+@media (orientation: portrait) { .sound-toggle { display: inline-flex; } }

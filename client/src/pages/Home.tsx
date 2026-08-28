@@ -175,6 +175,7 @@ export default function Home() {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraMessage, setCameraMessage] = useState("Camera standby");
   const [muted, setMuted] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [captureFx, setCaptureFx] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("capture-demo"));
   const [cameraPosition, setCameraPosition] = useState({ x: 68, y: 70 });
   const dragRef = useRef({ active: false, startX: 0, startY: 0, originX: 68, originY: 70 });
@@ -182,6 +183,8 @@ export default function Home() {
   const streamRef = useRef<MediaStream | null>(null);
   const engineTimer = useRef<number | null>(null);
   const captureTimer = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const soundEnabledRef = useRef(false);
   const demoMode = useMemo(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("demo"), []);
   const captureDemoMode = useMemo(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("capture-demo"), []);
 
@@ -207,12 +210,73 @@ export default function Home() {
   useEffect(() => () => {
     if (engineTimer.current) window.clearTimeout(engineTimer.current);
     if (captureTimer.current) window.clearTimeout(captureTimer.current);
+    void audioContextRef.current?.close();
     streamRef.current?.getTracks().forEach((track) => track.stop());
   }, []);
+
+  const getAudioContext = () => {
+    if (!soundEnabledRef.current || typeof window === "undefined") return null;
+    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return null;
+    if (!audioContextRef.current) audioContextRef.current = new AudioContextClass();
+    if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+    return audioContextRef.current;
+  };
+
+  const playCaptureCue = () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.16, now + 0.025);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 1.05);
+    master.connect(ctx.destination);
+    const thump = ctx.createOscillator();
+    thump.type = "sine";
+    thump.frequency.setValueAtTime(118, now);
+    thump.frequency.exponentialRampToValueAtTime(54, now + 0.35);
+    thump.connect(master);
+    thump.start(now);
+    thump.stop(now + 0.38);
+    const chime = ctx.createOscillator();
+    chime.type = "triangle";
+    chime.frequency.setValueAtTime(520, now + 0.08);
+    chime.frequency.exponentialRampToValueAtTime(1040, now + 0.72);
+    chime.connect(master);
+    chime.start(now + 0.08);
+    chime.stop(now + 0.86);
+  };
+
+  const playMarqueeCue = () => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.045, now + 0.01);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    master.connect(ctx.destination);
+    const tick = ctx.createOscillator();
+    tick.type = "sine";
+    tick.frequency.setValueAtTime(880, now);
+    tick.frequency.exponentialRampToValueAtTime(1320, now + 0.15);
+    tick.connect(master);
+    tick.start(now);
+    tick.stop(now + 0.18);
+  };
+
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    soundEnabledRef.current = next;
+    setSoundEnabled(next);
+    if (next) window.setTimeout(() => playMarqueeCue(), 0);
+  };
 
   const triggerCaptureFx = () => {
     if (captureTimer.current) window.clearTimeout(captureTimer.current);
     setCaptureFx(true);
+    playCaptureCue();
     captureTimer.current = window.setTimeout(() => setCaptureFx(false), 2600);
   };
 
@@ -339,9 +403,9 @@ export default function Home() {
 
   return (
     <main className="app-shell">
-      <div className="taiwan-marquee taiwan-marquee-top" aria-hidden="true"><div className="marquee-track"><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
-      <div className="taiwan-marquee taiwan-marquee-middle" aria-hidden="true"><div className="marquee-track marquee-track-reverse"><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
-      <div className="taiwan-marquee taiwan-marquee-bottom" aria-hidden="true"><div className="marquee-track marquee-track-reverse"><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
+      <div className="taiwan-marquee taiwan-marquee-top" aria-hidden="true"><div className="marquee-track" onAnimationIteration={playMarqueeCue}><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
+      <div className="taiwan-marquee taiwan-marquee-middle" aria-hidden="true"><div className="marquee-track marquee-track-reverse" onAnimationIteration={playMarqueeCue}><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
+      <div className="taiwan-marquee taiwan-marquee-bottom" aria-hidden="true"><div className="marquee-track marquee-track-reverse" onAnimationIteration={playMarqueeCue}><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span><span>QUANTA MỸ THUẬN ĐÃ CÓ THƯỞNG CÔNG NHÂN MỚI CÁC CON VỢ ƠI</span></div></div>
       {captureFx && <div className="capture-splash" role="status" aria-live="polite"><div className="capture-orbit capture-orbit-one" /><div className="capture-orbit capture-orbit-two" /><div className="quanta-stamp"><span className="quanta-symbol">Q</span><span className="quanta-word">QUANTA</span><small>TAIWAN / CAPTURED</small></div><div className="capture-caption">MATERIAL SHIFT <span>+</span>1</div></div>}
       <header className="topbar">
         <div className="brand-lockup">
@@ -351,6 +415,7 @@ export default function Home() {
         <div className="session-pill"><span className="live-dot" /> LIVE MATCH <strong>04:18</strong></div>
         <div className="top-actions">
           <button className="icon-button" aria-label="Help"><CircleHelp size={17} /></button>
+          <button className={`icon-button sound-toggle ${soundEnabled ? "sound-toggle-on" : ""}`} onClick={toggleSound} aria-label={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</button>
           <button className="icon-button" aria-label="Settings"><Settings2 size={17} /></button>
           <div className="top-avatar"><img src="/manus-storage/player-avatar_2671cb50.png" alt="Player avatar" /></div>
         </div>

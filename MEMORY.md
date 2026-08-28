@@ -23,3 +23,9 @@
 
 ## Marquee gold upgrade
 - The requested marquee phrase now renders at double size in portrait and desktop contexts, with a precious-metal gradient, animated brightness pulse, gold bloom, and retained Taiwan-blue edge glow for contrast.
+
+
+## Soundscape
+- Added an opt-in Web Audio API soundscape with no external audio assets. The sound toggle is visible in the top bar and changes to a glowing gold state when enabled.
+- Captures play a layered low impact plus ascending triangle chime. Each marquee animation iteration plays a short high-frequency Taiwan-blue tick, and enabling sound provides an immediate confirmation cue.
+- Audio remains off by default to respect browser autoplay policies and user preference; the first cue is unlocked through the sound button gesture.
