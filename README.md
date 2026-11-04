@@ -1,5 +1,7 @@
 # Neon Castle Chess — Dark Browser Chess Game vs AI with Camera Companion
 
+🔗 **Live demo / Chơi thử ngay:** https://vuvietnb85-web.github.io/neon-castle-chess/
+
 **Neon Castle Chess is a full-screen, dark-themed web chess app where you play white against a minimax alpha-beta engine, with an optional live camera companion panel and opt-in sound effects.**
 
 ## Features
